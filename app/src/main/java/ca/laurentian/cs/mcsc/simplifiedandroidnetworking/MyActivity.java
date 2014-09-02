@@ -6,6 +6,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -104,6 +105,11 @@ public class MyActivity extends Activity {
     public void onClickStartService(View v)
     {
         //TODO Check which option in the spinner has been selected, call the corresponding method
+        String selected = ((Spinner) findViewById(R.id.spinner)).toString();
+
+        //TODO Randomly change image to be Shatner.
+        final MediaPlayer mp = MediaPlayer.create(this, R.raw.makeitso2);
+        mp.start();
     }
 
     private void getWifiIP()
