@@ -92,7 +92,7 @@ public class NetworkingService extends IntentService
         if(intent.hasExtra(PARAM_IN_PAYLOAD))
             payload = intent.getStringExtra(PARAM_IN_PAYLOAD);
         if(intent.hasExtra(PARAM_IN_PORT))
-            port = intent.getIntExtra(PARAM_IN_PORT, 0);//If no port is included, use next available
+            port = intent.getIntExtra(PARAM_IN_PORT, 0);//If no port is included use next available
 
 
         //"Get Broadcast Address", "Receive Broadcast", "Send Broadcast",
@@ -120,8 +120,8 @@ public class NetworkingService extends IntentService
                 break;
             case getWifiIP:
                 Log.d("ServiceTag", "IMSG Found - getIP");
-                //TODO remove this and replace with something like MainActivity.getContext()
-                sendIntent(wifiIpAddress(this));//MainActivity.getApplicationContext()));
+                //TODO remove this and replace with something like MyActivity.getContext()
+                sendIntent(wifiIpAddress(this));//MyActivity.getApplicationContext()));
                 Log.d("ServiceTag", "IMSG Completed - getIP");
                 break;
             case sendUDP:
