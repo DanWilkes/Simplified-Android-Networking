@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="laptop.robert.furthernetworktests" >
+
+    <!-- Used to access the network. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Used for sanity checks. Prefer Wifi over mobile network. More work on this needed. -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <!-- Used to accept packets not addressed specifically to this device.
+         Used when searching local area network for players. -->
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE"/>
+
+    <application
+        android:allowBackup="true"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme" >
+
+        <service
+            android:name=".NetworkingService" >
+        </service>
+
+        <activity
+            android:name=".MainActivity"
+            android:label="@string/app_name" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+
+</manifest>
