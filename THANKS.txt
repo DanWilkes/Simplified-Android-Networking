@@ -1,0 +1,16 @@
+Many internet forum searches have allowed me to even start this project.
+Without Google, StackExchange and people that have come before me, I would not
+have been able to figure any of this out.
+
+
+I may have missed someone, if so, please let me know so that I may thank them properly.
+
+I did use tutorials from http://www.i-programmer.info
+Much of the networking code from various sources, especially Oracle and Google API tutorials
+My getWifiAddress() method is actually from Digital Rounin http://goo.gl/4WpgTN
+Thanks to PC. JunR for onStop() and onPause()
+from http://goo.gl/Da1NgA and from http://goo.gl/WSbHYc
+Thanks to Jwei for TCP Socket programming help, from http://goo.gl/vd7PAo
+Thanks to Pablisco from http://goo.gl/fZ8jtm for clearing up some Enum things for me.
+To my knowledge, all code from others I have used is part of the public domain,
+or else the copyright notice has been included in a sensible location.
