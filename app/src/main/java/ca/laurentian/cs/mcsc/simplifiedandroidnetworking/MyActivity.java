@@ -40,7 +40,7 @@ public class MyActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_my);
 
-        //Set up the spinner
+        //Set up the spinner. This was provided by
         Spinner s = (Spinner) findViewById(R.id.spinner);
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
                 android.R.layout.simple_spinner_item, spinnerContents);
@@ -104,6 +104,11 @@ public class MyActivity extends Activity {
     public void onClickStartService(View v)
     {
         //TODO Check which option in the spinner has been selected, call the corresponding method
+
+        String selected = ((Spinner)findViewById(R.id.spinner)).toString();
+
+
+        ((TextView)findViewById(R.id.PayloadText)).setText(selected);
     }
 
     private void getWifiIP()
