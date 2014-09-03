@@ -36,6 +36,8 @@ public class NetworkingService extends IntentService
     public static final String PARAM_IN_MSG = "imsg";
     public static final String PARAM_IN_PAYLOAD = "payload";
     public static final String PARAM_IN_PORT = "port";
+    public static final String PARAM_IN_TIMEOUT = "timeout";
+    public static final String PARAM_IN_IP = "ip";
     public static final String PARAM_OUT_MSG = "omsg";
     public static final String USER_MSG = "umsg";
     public static final String SERVER_MSG = "smsg";
@@ -53,6 +55,7 @@ public class NetworkingService extends IntentService
 
     /**
      * Intents are send back and forth to communicate between threads.
+     * @param ctrmsg The control message to determine which extra is being sent back
      * @param result The String message that you want to send back to the listening thread.
      */
     private void sendIntent(String ctrmsg, String result)
@@ -84,7 +87,9 @@ public class NetworkingService extends IntentService
         Log.d("ServiceTag", "onHandleIntent Start");
         MyActivity.inputMsg msg = MyActivity.inputMsg.failed;
         String payload = "";
-        int port = 0;
+        String ip = "";
+        int port = 14251;
+        int timeout = 12000; //12 second listen time
 
         //Check which extras have been included in this received intent.
         if(intent.hasExtra(PARAM_IN_MSG))
@@ -92,7 +97,11 @@ public class NetworkingService extends IntentService
         if(intent.hasExtra(PARAM_IN_PAYLOAD))
             payload = intent.getStringExtra(PARAM_IN_PAYLOAD);
         if(intent.hasExtra(PARAM_IN_PORT))
-            port = intent.getIntExtra(PARAM_IN_PORT, 0);//If no port is included use next available
+            port = intent.getIntExtra(PARAM_IN_PORT, port);
+        if(intent.hasExtra(PARAM_IN_IP))
+            ip = intent.getStringExtra(PARAM_IN_IP);
+        if(intent.hasExtra(PARAM_IN_TIMEOUT))
+            timeout = intent.getIntExtra(PARAM_IN_TIMEOUT, timeout);
 
 
         //"Get Broadcast Address", "Receive Broadcast", "Send Broadcast",
@@ -125,8 +134,10 @@ public class NetworkingService extends IntentService
                 Log.d("ServiceTag", "IMSG Completed - getIP");
                 break;
             case sendUDP:
+                sendUDPPacket(ip, port, payload);
                 break;
             case receiveUDP:
+                receiveUDPPacket(timeout, port);
                 break;
             case sendTCP:
                 break;
@@ -259,7 +270,7 @@ public class NetworkingService extends IntentService
      * @param timeout
      * @param port
      */
-    public void receiveUDPPacket(int timeout, int port) { receiveUDPPacket(timeout, port, 1000); }
+    public void receiveUDPPacket(int timeout, int port) { receiveUDPPacket(timeout, port, 500); }
 
     /**
      * WARNING: Does not support data types that can't be interpreted as Strings

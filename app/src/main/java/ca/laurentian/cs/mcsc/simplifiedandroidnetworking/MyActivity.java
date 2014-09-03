@@ -23,14 +23,14 @@ public class MyActivity extends Activity {
     private ResponseReceiver receiver;
     private boolean isRegistered = false;
     private boolean sending = false;
-    //The inputMsg correspond to spinnerContents ordering
+    //The inputMsg correspond to spinnerContents ordering. Very important that it remain so.
     public enum inputMsg {getBroadcastAddress, receiveBroadcast, sendBroadcast,
                             getWifiIP, sendUDP, receiveUDP,
                             sendTCP, receiveTCP, startTCPServer,
                             failed}
 
     private String spinnerContents[] = {"Get Broadcast Address", "Receive Broadcast",
-            "Send Broadcast", "Get Wifi IP", "Send UDP Packet", "Receive UDP",
+            "Send Broadcast", "Get Wifi IP", "Send UDP Packet", "Receive UDP Packet",
             "Send TCP Packet", "Receive TCP Packet", "Start TCP Server"};
 
     @Override
@@ -99,62 +99,17 @@ public class MyActivity extends Activity {
         return (id == R.id.action_settings) || super.onOptionsItemSelected(item);
     }
 
-
-
     public void onClickStartService(View v)
     {
         //TODO Check which option in the spinner has been selected, call the corresponding method
 
-        String selected = ((Spinner)findViewById(R.id.spinner)).toString();
+        Log.d("Main Tag", "Reached onClickStartService Start");
+        startNetwork(inputMsg.values()[((Spinner)findViewById(R.id.spinner)).getSelectedItemPosition()]);
 
-
-        ((TextView)findViewById(R.id.PayloadText)).setText(selected);
-    }
-
-    private void getWifiIP()
-    {
-        //Query Networking service to get local IP
-        Log.d("MainTag", "Reached onClickIPButton Start");
-
-        //Create new Intent, start service, get device IP
-        startNetwork(inputMsg.getWifiIP);
-
-        Log.d("MainTag", "Reached onClickIPButton End");
-        Log.d("WS", "|                                     |");
-    }
-
-    private void getBroadcastAddress()
-    {
-        Log.d("MainTag", "Reached onClickGetBroadcastAddrButton Start");
-
-        //Create new Intent, start service, get device IP
-        startNetwork(inputMsg.getBroadcastAddress);
-
-        Log.d("MainTag", "Reached onClickGetBroadcastAddrButton End");
-        Log.d("WS", "|                                     |");
-    }
-
-    private void sendBroadcast()
-    {
-        Log.d("MainTag", "Reached onClickSendBroadcastButton Start");
-
-        //Create new Intent, start service, send
-        sending = true;
-        startNetwork(inputMsg.sendBroadcast);
-
-        Log.d("MainTag", "Reached onClickSendBroadcastButton End");
-        Log.d("WS", "|                                     |");
-    }
-
-    private void receiveBroadcast()
-    {
-        Log.d("MainTag", "Reached onClickGetBroadcastButton Start");
-
-        //Create new Intent, start service, receive
-        startNetwork(inputMsg.receiveBroadcast);
-
-        Log.d("MainTag", "Reached onClickGetBroadcastButton End");
-        Log.d("WS", "|                                     |");
+        Log.d("Main Tag", "Reached onClickStartService End");
+        //String selected = (String)((Spinner)findViewById(R.id.spinner)).getSelectedItem();
+        //((TextView)findViewById(R.id.PayloadText)).setText(selected + " "
+        //        + ((Spinner)findViewById(R.id.spinner)).getSelectedItemPosition());
     }
 
     /**
@@ -163,18 +118,26 @@ public class MyActivity extends Activity {
      */
     private void startNetwork(inputMsg msg)
     {
-
+        Log.d("Main Tag", "Reached startNetwork Start");
         Intent intent = new Intent(this, NetworkingService.class);
         intent.putExtra(NetworkingService.PARAM_IN_MSG, msg);
-        //If a payload is being sent, then and only then include the payload, even if null
-        if(sending)
+
+        String ip = ((TextView)findViewById(R.id.ip)).getText().toString();
+        //No error checking to see if a valid IP is entered. They could technically enter a URL
+        if(!ip.equals(""))
         {
-            sending = false;
-            String payload = ((TextView)findViewById(R.id.PayloadText)).getText().toString();
-            intent.putExtra(NetworkingService.PARAM_IN_PAYLOAD, payload);
+            intent.putExtra(NetworkingService.PARAM_IN_IP, ip);
+        }
+        //If a payload is being sent, then and only then include the payload, even if null
+        if(msg.equals(inputMsg.sendBroadcast) || msg.equals(inputMsg.sendTCP)
+                || msg.equals(inputMsg.sendUDP))
+        {
+            intent.putExtra(NetworkingService.PARAM_IN_PAYLOAD, ((TextView)findViewById(R.id.PayloadText)).getText().toString());
         }
 
         startService(intent);
+
+        Log.d("Main Tag", "Reached startNetwork End");
     }
 
 
@@ -183,17 +146,19 @@ public class MyActivity extends Activity {
      */
     public class ResponseReceiver extends BroadcastReceiver
     {
-
         public static final String ACTION_RESP = "MSG_PROCESSED";
 
         @Override
-        public void onReceive(Context context, Intent intent) {
-
+        public void onReceive(Context context, Intent intent)
+        {
+            Log.d("Response Receiver", "Reached RR Start");
             //Display the MSG to user in the PayloadText that sends messages
             ((TextView) findViewById(R.id.PayloadText)).setText(
                     intent.getStringExtra(NetworkingService.PARAM_OUT_MSG));
 
             Toast.makeText(getBaseContext(), "Service Replied", Toast.LENGTH_SHORT).show();
+
+            Log.d("Response Receiver", "Reached RR End");
         }
     }
 }
