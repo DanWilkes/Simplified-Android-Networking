@@ -145,6 +145,8 @@ public class NetworkingService extends IntentService
                 break;
             case startTCPServer:
                 break;
+            case discover:
+                break;
             case failed:
                 //Intentional fall-through
             default: //The Param was either not included, or something went wrong
