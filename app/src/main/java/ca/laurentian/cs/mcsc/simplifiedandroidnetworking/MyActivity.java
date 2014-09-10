@@ -27,11 +27,12 @@ public class MyActivity extends Activity {
     public enum inputMsg {getBroadcastAddress, receiveBroadcast, sendBroadcast,
                             getWifiIP, sendUDP, receiveUDP,
                             sendTCP, receiveTCP, startTCPServer,
-                            discover, failed}
+                            discover, declare, failed}
 
     private String spinnerContents[] = {"Get Broadcast Address", "Receive Broadcast",
             "Send Broadcast", "Get Wifi IP", "Send UDP Packet", "Receive UDP Packet",
-            "Send TCP Packet", "Receive TCP Packet", "Start TCP Server", "discover"};
+            "Send TCP Packet", "Receive TCP Packet", "Start TCP Server", "discover",
+            "declare"};
 
     @Override
     protected void onCreate(Bundle savedInstanceState)

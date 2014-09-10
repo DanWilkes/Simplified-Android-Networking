@@ -28,6 +28,7 @@ package ca.laurentian.cs.mcsc.simplifiedandroidnetworking;
         import java.net.SocketTimeoutException;
         import java.net.UnknownHostException;
         import java.nio.ByteOrder;
+        import java.util.ArrayList;
 
 public class NetworkingService extends IntentService
 {
@@ -43,18 +44,26 @@ public class NetworkingService extends IntentService
     public static final String SERVER_MSG = "smsg";
 
 
+    private String discoveryMessage = "Unique Message";
+    //TODO Make get and set methods for this;
+    private int defaultBufferSize = 500;
     private boolean connected = false;
     private ServerSocket servSock = null;
+    private boolean discovering = false;
 
 
     /**
      * I have no idea what the super constructor is doing in this case.
      */
-    public NetworkingService() { super("NetworkingService"); }
+    public NetworkingService()
+    {
+        super("NetworkingService");
+    }
 
 
     /**
      * Intents are send back and forth to communicate between threads.
+     *
      * @param ctrmsg The control message to determine which extra is being sent back
      * @param result The String message that you want to send back to the listening thread.
      */
@@ -70,6 +79,7 @@ public class NetworkingService extends IntentService
 
     /**
      * Intents are send back and forth to communicate between threads.
+     *
      * @param result The String message that you want to send back to the listening thread.
      */
     private void sendIntent(String result)
@@ -79,6 +89,7 @@ public class NetworkingService extends IntentService
 
     /**
      * This is never called by the user. The user calls start(intent), this is called automatically.
+     *
      * @param intent The intent that has been received.
      */
     @Override
@@ -92,29 +103,35 @@ public class NetworkingService extends IntentService
         int timeout = 12000; //12 second listen time
 
         //Check which extras have been included in this received intent.
-        if(intent.hasExtra(PARAM_IN_MSG))
+        if (intent.hasExtra(PARAM_IN_MSG))
             msg = (MyActivity.inputMsg) intent.getSerializableExtra(PARAM_IN_MSG);
-        if(intent.hasExtra(PARAM_IN_PAYLOAD))
+        if (intent.hasExtra(PARAM_IN_PAYLOAD))
             payload = intent.getStringExtra(PARAM_IN_PAYLOAD);
-        if(intent.hasExtra(PARAM_IN_PORT))
+        if (intent.hasExtra(PARAM_IN_PORT))
             port = intent.getIntExtra(PARAM_IN_PORT, port);
-        if(intent.hasExtra(PARAM_IN_IP))
+        if (intent.hasExtra(PARAM_IN_IP))
             ip = intent.getStringExtra(PARAM_IN_IP);
-        if(intent.hasExtra(PARAM_IN_TIMEOUT))
+        if (intent.hasExtra(PARAM_IN_TIMEOUT))
             timeout = intent.getIntExtra(PARAM_IN_TIMEOUT, timeout);
 
 
         //"Get Broadcast Address", "Receive Broadcast", "Send Broadcast",
         //"Get Wifi IP", "Send UDP Packet", "Receive UDP",
         //"Send TCP Packet", "Receive TCP Packet", "Start TCP Server"}
-        switch(msg)
+        switch (msg)
         {
             case getBroadcastAddress:
                 Log.d("ServiceTag", "IMSG Found - getBroadcastAddr");
                 try
-                { sendIntent(getBroadcastAddress().getHostAddress()); }
-                catch (UnknownHostException e) { e.printStackTrace(); }
-                catch (IOException e)  {  e.printStackTrace(); }
+                {
+                    sendIntent(getBroadcastAddress().getHostAddress());
+                } catch (UnknownHostException e)
+                {
+                    e.printStackTrace();
+                } catch (IOException e)
+                {
+                    e.printStackTrace();
+                }
                 Log.d("ServiceTag", "IMSG Completed - getBroadcastAddr");
                 break;
             case receiveBroadcast:
@@ -146,6 +163,10 @@ public class NetworkingService extends IntentService
             case startTCPServer:
                 break;
             case discover:
+                receiveBroadcast(port, discoveryMessage);
+                break;
+            case declare:
+                sendBroadcast(port, discoveryMessage);
                 break;
             case failed:
                 //Intentional fall-through
@@ -162,7 +183,7 @@ public class NetworkingService extends IntentService
      */
     protected String wifiIpAddress(Context context)
     {
-        Log.d("Debug Wifi","Reached wifiIpAddress Start");
+        Log.d("Debug Wifi", "Reached wifiIpAddress Start");
         WifiManager wifiManager = (WifiManager) context.getSystemService(WIFI_SERVICE);
         int ipAddress = wifiManager.getConnectionInfo().getIpAddress();
 
@@ -173,19 +194,22 @@ public class NetworkingService extends IntentService
         byte[] ipByteArray = BigInteger.valueOf(ipAddress).toByteArray();
 
         String ipAddressString;
-        try {
+        try
+        {
             ipAddressString = InetAddress.getByAddress(ipByteArray).getHostAddress();
-        } catch (UnknownHostException ex) {
-            ipAddressString = null; }
+        } catch (UnknownHostException ex)
+        {
+            ipAddressString = null;
+        }
 
-        Log.d("Debug Wifi","Reached wifiIpAddress End");
+        Log.d("Debug Wifi", "Reached wifiIpAddress End");
         return ipAddressString;
     }
 
     /**
      * @return Returns the address that the local network uses for broadcast messages
      * @throws IOException I don't know why this throws an IOException. Possible because
-     * there is no guarantee that the WiFi is turned on.
+     *                     there is no guarantee that the WiFi is turned on.
      */
     private InetAddress getBroadcastAddress() throws IOException
     {
@@ -210,7 +234,8 @@ public class NetworkingService extends IntentService
 
     /**
      * This is used to send an arbitrary message on the local broadcast channel. ex: 192.168.0.255
-     * @param port The port on which the broadcast will be sent.
+     *
+     * @param port    The port on which the broadcast will be sent.
      * @param payload The message that is sent along with this UDP Packet.
      */
     private void sendBroadcast(int port, String payload)
@@ -218,13 +243,16 @@ public class NetworkingService extends IntentService
         Log.d("Debug Wifi", "Reached sendBroadcast Start");
 
         //TODO remove this and replace with something like MainActivity.getContext()
-        if(payload.equals(""))
+        if (payload.equals(""))
             payload = wifiIpAddress(this);
         //I don't know if getHostAddress() will work as expected. TODO Test this again
         try
-        { sendUDPPacket(getBroadcastAddress().getHostAddress(), port, payload.getBytes());
+        {
+            sendUDPPacket(getBroadcastAddress().getHostAddress(), port, payload.getBytes());
         } catch (IOException e)
-        { e.printStackTrace(); }
+        {
+            e.printStackTrace();
+        }
 
 
         Log.d("Debug Wifi", "Reached sendBroadcast End");
@@ -235,18 +263,26 @@ public class NetworkingService extends IntentService
      * If another application is trying to use this port, behaviour of this code
      * is undefined.
      */
-    public void receiveBroadcast() { receiveBroadcast(5000, 14251); }
+    public void receiveBroadcast()
+    {
+        receiveBroadcast(5000, 14251);
+    }
 
     /**
      * Calls receiveBroadcast(int, int) with a timeout of 5 seconds.
+     *
      * @param port The port on which the broadcast packets will be received.
      *             Using port 0 automatically selects the next available port.
      */
-    public void receiveBroadcast(int port) { receiveBroadcast(5000, port); }
+    public void receiveBroadcast(int port)
+    {
+        receiveBroadcast(5000, port);
+    }
+
     /**
      * @param timeout The time to listen for incoming broadcast packets.
-     * @param port The port on which the broadcast packets will be received.
-     *             Using port 0 automatically selects the next available port.
+     * @param port    The port on which the broadcast packets will be received.
+     *                Using port 0 automatically selects the next available port.
      */
     public void receiveBroadcast(int timeout, int port)
     {
@@ -254,7 +290,7 @@ public class NetworkingService extends IntentService
         //Android filters out packets not explicitly addressed to it.
         //This disables that behaviour to allow those packets
         //These next 3 lines + release lock line is not my code. I can't remember when I found it.
-        WifiManager wm = (WifiManager)getSystemService(Context.WIFI_SERVICE);
+        WifiManager wm = (WifiManager) getSystemService(Context.WIFI_SERVICE);
         WifiManager.MulticastLock multicastLock = wm.createMulticastLock("mydebuginfo");
         multicastLock.acquire();
 
@@ -266,24 +302,78 @@ public class NetworkingService extends IntentService
         Log.d("Debug Wifi", "Reached receiveBroadcast End");
     }
 
+
     /**
-     * WARNING: Does not support data types that can't be interpreted as Strings
-     * Calls receiveUDPPacket(int, int, int) with timeout, port, and 1000 as the arguments.
-     * @param timeout
-     * @param port
+     * Gets a line delimited, using \n, list of devices which replied, with their message.
+     * Usually their message will be their IP address.
+     * @param port The port on which the packet will be received.
+     * @param compare The message to ensure that this application does not receive packets
+     *                intended for other application using the broadcast address.
      */
-    public void receiveUDPPacket(int timeout, int port) { receiveUDPPacket(timeout, port, 500); }
+    public void receiveBroadcast(int port, String compare)
+    {
+        discovering = true;
+        byte[] buffer = new byte[defaultBufferSize];
+        String deviceList = "";
+        while(discovering)
+        {
+            receiveUDPPacket(10000, port, buffer, defaultBufferSize);
+            String[] msg = (new String(buffer)).split("\n");
+            try
+            {
+                if (msg[0].equals(compare))
+                    deviceList += "\n" + msg[1];
+            } catch(ArrayIndexOutOfBoundsException e)
+            { e.printStackTrace(); }
+            //TODO This is only for testing purposes.
+            // As long as at 1 packet has been discovered, stop checking.
+            if(!deviceList.equals(""))
+                discovering = false;
+        }
+
+        sendIntent(deviceList);
+    }
 
     /**
      * WARNING: Does not support data types that can't be interpreted as Strings
-     * @param timeout
-     * @param port
-     * @param bufferSize
+     * Calls receiveUDPPacket(int, int, int) with timeout, port, and 1000 as the arguments.
+     * I intend to change that later on. It should be fairly simple, since I am just
+     * getting the byte array that the string is made up from and putting that in the packet.
+     * Meaning that, in the future, any data that can't be interpreted as a Byte Array won't work.
+     * @param timeout The time, in ms, before the device stops listening for a packet.
+     * @param port The port on which the packet will be received.
+     */
+    public void receiveUDPPacket(int timeout, int port)
+    {
+        receiveUDPPacket(timeout, port, defaultBufferSize);
+    }
+
+    /**
+     * Begins to receive UDP Packets.
+     *
+     * @param timeout The time, in ms, before the device stops listening for a packet.
+     * @param port The port on which the packet will be received.
+     * @param bufferSize The expected size of the packet.
      */
     public void receiveUDPPacket(int timeout, int port, int bufferSize)
     {
+        receiveUDPPacket(timeout, port, new byte[bufferSize], bufferSize);
+    }
+
+
+    /**
+     * WARNING: Does not support data types that can't be interpreted as Strings
+     *
+     * @param timeout The time, in ms, before the device stops listening for a packet.
+     * @param port The port on which the packet will be received.
+     * @param buffer The holder for the contents of the incoming packet
+     * @param bufferSize The expected size of the packet. Packets smaller than the buffer appear to,
+     *                   though I am not fully certain, simply trim the excess space.
+     *                   This must be the same size as, or smaller than the buffer
+     */
+    public void receiveUDPPacket(int timeout, int port, byte[] buffer, int bufferSize)
+    {
         Log.d("Debug Wifi", "Reached receiveUDPPacket Start");
-        byte[] buffer = new byte[bufferSize];
         try
         {//Perhaps excessive debug messages are due to an error which was long ago corrected.
             Log.d("Debug RUDPP", "UDP Receive Try Started");
@@ -303,20 +393,40 @@ public class NetworkingService extends IntentService
             sock.close();
             Log.d("Debug RUDPP", "UDP Receive Try Ended");
         } catch (SocketTimeoutException e)
-        {   Log.d("Debug RUDPP", "Socket Timeout Exception");
+        {
+            Log.d("Debug RUDPP", "Socket Timeout Exception");
             buffer = "No Packet Arrived - Socket Timed out.".getBytes();
         } catch (IOException e)
-        {   Log.d("Debug RUDPP", "IOException");
+        {
+            Log.d("Debug RUDPP", "IOException");
             e.printStackTrace();
-        } catch (Exception e){Log.d("Debug RB",  "Generic Failure: " + e.getMessage());}
+        } catch (Exception e)
+        {
+            Log.d("Debug RB", "Generic Failure: " + e.getMessage());
+        }
 
         //Convert the bytes in the packet to a String.
-        sendIntent(new String(buffer));
+        if(!discovering)
+            sendIntent(new String(buffer));
         Log.d("Debug Wifi", "Reached receiveUDPPacket End");
     }
 
+    /**
+     * Sets the Discovery Message for this application. The message cannot be "" or "null"..
+     * @param discoveryMessage The message that the developer users to identify their application
+     *                         to other devices using their application
+     */
+    public void setDiscoveryMessage(String discoveryMessage)
+    {
+        if (!discoveryMessage.equals("") && !discoveryMessage.equals("null"))
+            this.discoveryMessage = discoveryMessage;
+    }
 
-
+    /**
+     * Informs user what the currently used Discovery Message is.
+     * @return The current Discovery Message
+     */
+    public String getDiscoveryMessage() { return discoveryMessage; }
 
     public void sendUDPPacket(String ip, String payload) { sendUDPPacket(ip, 0, payload.getBytes()); }
     public void sendUDPPacket(String ip, int port, String payload) { sendUDPPacket(ip, port, payload.getBytes()); }
@@ -358,7 +468,7 @@ public class NetworkingService extends IntentService
 
 
 
-    //This is some dumb code. I don't understand it at all.
+    //This is some dumb code. I don't understand it at all. I do not enjoy TCP
     public void openTCPServer(int port) { openTCPServer(port, 120000); }
     public void openTCPServer(int port, int timeout)
     {
